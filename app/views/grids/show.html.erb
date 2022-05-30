@@ -1,0 +1,51 @@
+<%
+    if params[:local]
+      # the grid is pre-rendered with data
+      src = nil
+      rows = 0...1_000
+    elsif params[:load]
+      # the grid is pre-rendered with data set that is fetched remotely
+      min, max = params.values_at :startRow, :endRow
+      min = min || 0
+      max = max || 100
+      min, max = [min, max].map(&:to_i).minmax
+
+      src = nil
+      rows = min...max
+    else
+      src = grid_path(load: true)
+      rows = []
+    end
+%>
+
+<% if params[:local] %>
+  <%= link_to "Visit server-side dataset", grid_path %>
+<% else %>
+  <%= link_to "Visit client-side dataset", grid_path(local: true) %>
+<% end %>
+
+<%= tag.div class: "h-[calc(100vh-3rem)]", data: {
+      controller: "grid",
+      grid_options_value: {
+        columnDefs: [
+          { field: "a" },
+          { field: "b" },
+          { field: "c" },
+        ],
+        pagination: true,
+        rowModelType: "serverSide",
+        serverSideStoreType: params[:local] ? nil : "partial",
+      },
+    } do %>
+  <%= turbo_frame_tag "grid-datasource", src: src,
+                      data: { action: "grid:pagination->grid#loadRows" } do %>
+    <%= tag.meta data: { grid_target: "datasource" },
+                 content: {
+                   rowData: rows.map { |index| { a: index, b: index, c: index } },
+                   rowCount: 1_000,
+                 }.to_json %>
+  <% end %>
+
+  <div class="h-full ag-theme-alpine"
+       data-grid-target="table"></div>
+<% end %>
