@@ -1,0 +1,8 @@
+<%= form_with model: @upload do |form| %>
+  <%= form.label :file %>
+  <%= form.file_field :file, direct_upload: true %>
+
+  <%= form.button do %>
+    Upload
+  <% end %>
+<% end %>
